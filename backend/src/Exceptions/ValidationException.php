@@ -4,21 +4,13 @@ declare(strict_types=1);
 
 namespace App\Exceptions;
 
-use InvalidArgumentException;
-
-final class ValidationException extends InvalidArgumentException
+final class ValidationException extends HttpException
 {
     /** @param array<string, string> $details */
     public function __construct(
         string $message,
-        private readonly array $details = [],
+        array $details = [],
     ) {
-        parent::__construct($message);
-    }
-
-    /** @return array<string, string> */
-    public function details(): array
-    {
-        return $this->details;
+        parent::__construct($message, 422, 'VALIDATION_ERROR', $details);
     }
 }

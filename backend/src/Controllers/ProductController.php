@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Exceptions\ValidationException;
+use App\Exceptions\NotFoundException;
 use App\Http\JsonResponse;
-use App\Validators\ValidateProductBody;
 use App\Presenters\ProductPresenter;
 use App\Repositories\ProductRepository;
-use Throwable;
+use App\Validators\ValidateProductBody;
 
 final class ProductController
 {
@@ -49,8 +48,7 @@ final class ProductController
         $product = $this->products->findById($id);
 
         if ($product === null) {
-            JsonResponse::error('Product not found.', 404, 'NOT_FOUND');
-            return;
+            throw new NotFoundException('Product not found.');
         }
 
         JsonResponse::send($this->presenter->present($product));
@@ -58,56 +56,32 @@ final class ProductController
 
     public function store(): void
     {
-        try {
-            $request = $this->validateProductBody->validate();
-            $id = $this->products->create($request->toArray());
-            $product = $this->products->findById($id);
+        $request = $this->validateProductBody->validate();
+        $id = $this->products->create($request->toArray());
+        $product = $this->products->findById($id);
 
-            JsonResponse::send($this->presenter->present($product ?? []), 201);
-        } catch (ValidationException $exception) {
-            JsonResponse::error(
-                $exception->getMessage(),
-                422,
-                'VALIDATION_ERROR',
-                $exception->details()
-            );
-        } catch (Throwable) {
-            JsonResponse::error('Unable to create product.', 500, 'SERVER_ERROR');
-        }
+        JsonResponse::send($this->presenter->present($product ?? []), 201);
     }
 
     public function update(int $id): void
     {
-        try {
-            $request = $this->validateProductBody->validate();
+        $request = $this->validateProductBody->validate();
 
-            // Single write, then one read — avoid a pre-update existence SELECT.
-            $this->products->update($id, $request->toArray());
-            $product = $this->products->findById($id);
+        // Single write, then one read — avoid a pre-update existence SELECT.
+        $this->products->update($id, $request->toArray());
+        $product = $this->products->findById($id);
 
-            if ($product === null) {
-                JsonResponse::error('Product not found.', 404, 'NOT_FOUND');
-                return;
-            }
-
-            JsonResponse::send($this->presenter->present($product));
-        } catch (ValidationException $exception) {
-            JsonResponse::error(
-                $exception->getMessage(),
-                422,
-                'VALIDATION_ERROR',
-                $exception->details()
-            );
-        } catch (Throwable) {
-            JsonResponse::error('Unable to update product.', 500, 'SERVER_ERROR');
+        if ($product === null) {
+            throw new NotFoundException('Product not found.');
         }
+
+        JsonResponse::send($this->presenter->present($product));
     }
 
     public function destroy(int $id): void
     {
         if (!$this->products->delete($id)) {
-            JsonResponse::error('Product not found.', 404, 'NOT_FOUND');
-            return;
+            throw new NotFoundException('Product not found.');
         }
 
         JsonResponse::noContent();

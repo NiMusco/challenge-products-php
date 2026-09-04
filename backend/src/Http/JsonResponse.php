@@ -17,25 +17,4 @@ final class JsonResponse
     {
         http_response_code(204);
     }
-
-    /**
-     * @param array<string, mixed>|list<mixed>|null $details
-     */
-    public static function error(
-        string $message,
-        int $status = 400,
-        string $code = 'ERROR',
-        array|null $details = null,
-    ): void {
-        $payload = [
-            'error' => $message,
-            'code' => $code,
-        ];
-
-        if ($details !== null) {
-            $payload['details'] = $details;
-        }
-
-        self::send($payload, $status);
-    }
 }

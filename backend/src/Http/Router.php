@@ -5,17 +5,30 @@ declare(strict_types=1);
 namespace App\Http;
 
 use App\Controllers\ProductController;
+use App\Exceptions\MethodNotAllowedException;
+use App\Exceptions\NotFoundException;
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
+use Throwable;
 
 final class Router
 {
     public function __construct(
         private readonly ProductController $products,
+        private readonly ExceptionHandler $exceptions = new ExceptionHandler(),
     ) {
     }
 
     public function dispatch(string $httpMethod, string $uri): void
+    {
+        try {
+            $this->dispatchRoute($httpMethod, $uri);
+        } catch (Throwable $exception) {
+            $this->exceptions->handle($exception);
+        }
+    }
+
+    private function dispatchRoute(string $httpMethod, string $uri): void
     {
         if (false !== $pos = strpos($uri, '?')) {
             $uri = substr($uri, 0, $pos);
@@ -34,12 +47,10 @@ final class Router
 
         switch ($routeInfo[0]) {
             case Dispatcher::NOT_FOUND:
-                JsonResponse::error('Route not found.', 404, 'NOT_FOUND');
-                break;
+                throw new NotFoundException('Route not found.');
 
             case Dispatcher::METHOD_NOT_ALLOWED:
-                JsonResponse::error('Method not allowed.', 405, 'METHOD_NOT_ALLOWED');
-                break;
+                throw new MethodNotAllowedException();
 
             case Dispatcher::FOUND:
                 $handler = $routeInfo[1];
@@ -51,7 +62,7 @@ final class Router
                     'store' => $this->products->store(),
                     'update' => $this->products->update((int) $vars['id']),
                     'destroy' => $this->products->destroy((int) $vars['id']),
-                    default => JsonResponse::error('Unhandled route.', 500, 'SERVER_ERROR'),
+                    default => throw new NotFoundException('Unhandled route.'),
                 };
                 break;
         }
