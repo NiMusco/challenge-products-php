@@ -1,71 +1,45 @@
----
+# 🛒 PHP Products Challenge (Backend)
 
-
-
-# 🛒 Products API Challenge
-
-![PHP](https://img.shields.io/badge/php-%23777BB4.svg?style=for-the-badge&logo=php&logoColor=white)
-![MySQL](https://img.shields.io/badge/mysql-%234479A1.svg?style=for-the-badge&logo=mysql&logoColor=white)
-![Docker](https://img.shields.io/badge/docker-%232496ED.svg?style=for-the-badge&logo=docker&logoColor=white)
-![Swagger](https://img.shields.io/badge/swagger-%2385EA2D.svg?style=for-the-badge&logo=swagger&logoColor=black)
-![FastRoute](https://img.shields.io/badge/fast--route-%23000000.svg?style=for-the-badge&logo=php&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-8.2-777BB4?style=for-the-badge&logo=php&logoColor=white)
+![Apache](https://img.shields.io/badge/Apache-2.4-D22128?style=for-the-badge&logo=apache&logoColor=white)
+![phpdotenv](https://img.shields.io/badge/phpdotenv-5.7.0-563D7C?style=for-the-badge&logo=php&logoColor=white)
+![FastRoute](https://img.shields.io/badge/FastRoute-1.3.1-000000?style=for-the-badge&logo=php&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![Pest](https://img.shields.io/badge/Pest-2.36.1-FF3E00?style=for-the-badge&logo=php&logoColor=white)
+![Swagger](https://img.shields.io/badge/OpenAPI-3.0-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)
 
 Native PHP REST API for product management (no frameworks). Dockerized with Apache and MySQL.
-<br>Exposes a clean CRUD for `productos` and converts prices to USD using the `PRECIO_USD` environment variable.
+<br>Exposes a clean CRUD for products and converts prices to USD using the `PRECIO_USD` environment variable.
 
 ---
+
+## 📚 Documentation
+
+- **[Monorepo README](../README.md)**
 
 ## :electric_plug: Installation
 
 This project runs with Docker Compose from the repository root.
 
----
+```bash
+docker compose up -d
+```
 
-## 🧐 Features:
+## 🧩 Features
 
 - **Routing**: `nikic/fast-route` for routing
 - **Config**: `vlucas/phpdotenv` for environment variables
-- **USD Conversion**: Responses include `precio` (ARS) and `precio_usd` from `PRECIO_USD`
-- **Swagger Docs**: Separate Docker service (`swagger/openapi.yaml`)
-- **Tests**: Pest feature tests for each API endpoint
 
-## 🗄️ Database Management
+## 🗄️ Database
 
-App schema + seed: `backend/database/init.sql` (MySQL service `db`)
-<br>Test schema only: `backend/database/schema.sql` (MySQL service `db_test`)
+Schema + seed: `backend/database/init.sql`
+<br>Runs automatically on MySQL entrypoint `/docker-entrypoint-initdb.d/`.
 
-Both run automatically on each MySQL entrypoint `/docker-entrypoint-initdb.d/`.
-
-Default credentials (same on both containers):
-
-- Database: `productos`
-- User / password: `productos` / `secret`
-- Root password: `root`
-- App MySQL: Docker service `db` (host port `3306`)
-- Test MySQL: Docker service `db_test` (no host port; Docker network only)
-
-## 🧪 Tests
-
-Pest feature tests cover each API endpoint (`GET` list/show, `POST`, `PUT`, `DELETE`).
-
-### Database isolation (Docker)
-
-Feature tests call the API over HTTP, so Pest cannot wrap writes in a DB transaction and roll them back (another PHP process owns the connection). A second table—or even a second schema—on the **same** MySQL container still shares the app’s server.
-
-Isolation here is a **dedicated MySQL container** (`db_test`) with its own Docker volume (`mysql_test_data`):
-
-1. `bin/ensure-testing-database.php` waits until `db_test` is reachable
-2. `composer test` boots a temporary PHP built-in server with `DB_HOST=db_test` (Apache keeps using `db`)
-3. Each test truncates `productos` on `db_test` only
-
-```bash
-docker compose up -d
-docker compose exec api composer test
-```
+DB credentials: see [`docker-compose.yml`](../docker-compose.yml)
 
 ## 📚 API Documentation
 
-Swagger UI at `http://localhost:8082`
+Swagger UI at http://localhost:8082
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -87,4 +61,25 @@ Error responses format:
 }
 ```
 
----
+## 🧪 Tests
+
+HTTP API tests use **Pest** against the running Apache `api` (`tests/ProductsTestCase.php` + `tests/Products/`).
+
+Running them will create/update/delete rows in `productos`.
+<br>Tests that need an existing row create it first with `POST`.
+<br>Each endpoint covers the happy path plus error cases (`404`, `422`, `405` where relevant).
+
+| File | Endpoint |
+|------|----------|
+| `ListProductsTest.php` | `GET /productos` |
+| `GetProductTest.php` | `GET /productos/{id}` |
+| `CreateProductTest.php` | `POST /productos` |
+| `UpdateProductTest.php` | `PUT /productos/{id}` |
+| `DeleteProductTest.php` | `DELETE /productos/{id}` |
+
+### Run
+
+```bash
+docker compose up -d
+docker compose exec api composer test
+```

@@ -18,11 +18,11 @@ final class Database
             return self::$connection;
         }
 
-        $host = $_ENV['DB_HOST'] ?? 'db';
-        $port = $_ENV['DB_PORT'] ?? '3306';
-        $database = $_ENV['DB_DATABASE'] ?? 'productos';
-        $username = $_ENV['DB_USERNAME'] ?? 'productos';
-        $password = $_ENV['DB_PASSWORD'] ?? 'secret';
+        $host = (string) env('DB_HOST', 'db');
+        $port = (string) env('DB_PORT', '3306');
+        $database = (string) env('DB_DATABASE', 'productos');
+        $username = (string) env('DB_USERNAME', 'productos');
+        $password = (string) env('DB_PASSWORD', 'secret');
 
         $dsn = sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4', $host, $port, $database);
 

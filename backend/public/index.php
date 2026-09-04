@@ -10,7 +10,7 @@ use App\Services\PriceConverter;
 
 require dirname(__DIR__) . '/bootstrap.php';
 
-$priceConverter = new PriceConverter((float) ($_ENV['PRECIO_USD'] ?? 0));
+$priceConverter = new PriceConverter((float) env('PRECIO_USD', 0));
 $presenter = new ProductPresenter($priceConverter);
 $controller = new ProductController(new ProductRepository(), $presenter);
 $router = new Router($controller);

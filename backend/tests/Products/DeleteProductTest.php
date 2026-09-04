@@ -13,12 +13,14 @@ it('deletes a product on DELETE /productos/{id}', function () {
         ->and($response['raw'])->toBe('');
 
     $missing = $this->api('GET', '/productos/' . $id);
-    expect($missing['status'])->toBe(404);
+    expect($missing['status'])->toBe(404)
+        ->and($missing['body']['code'])->toBe('NOT_FOUND');
 });
 
 it('returns 404 when deleting a missing product on DELETE /productos/{id}', function () {
     $response = $this->api('DELETE', '/productos/999999');
 
     expect($response['status'])->toBe(404)
-        ->and($response['body']['code'])->toBe('NOT_FOUND');
+        ->and($response['body']['code'])->toBe('NOT_FOUND')
+        ->and($response['body']['error'])->toBe('Product not found.');
 });
