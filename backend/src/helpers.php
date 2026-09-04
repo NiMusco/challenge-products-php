@@ -2,10 +2,8 @@
 
 declare(strict_types=1);
 
-/**
- * Read an environment variable.
- * Prefers the process environment (Docker Compose, etc.) over .env / $_ENV.
- */
+# Read an environment variable.
+# Prefers the process environment (Docker Compose, etc.) over .env / $_ENV.
 function env(string $key, mixed $default = null): mixed
 {
     $value = getenv($key);

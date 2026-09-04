@@ -28,12 +28,7 @@ final class ProductRepository
         return $statement->fetchAll();
     }
 
-    /**
-     * @return array{
-     *   items: list<array<string, mixed>>,
-     *   total: int
-     * }
-     */
+    /** @return array{items: list<array<string, mixed>>, total: int} */
     public function findPaginated(int $page, int $perPage): array
     {
         $page = max(1, $page);

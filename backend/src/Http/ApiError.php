@@ -6,7 +6,6 @@ namespace App\Http;
 
 use App\Exceptions\HttpException;
 
-/** Predictable API error payload ({ error, code, details? }). */
 final class ApiError
 {
     /**

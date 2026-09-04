@@ -29,8 +29,7 @@ docker compose up -d
 
 - **Routing**: `nikic/fast-route` for routing
 - **Config**: `vlucas/phpdotenv` for environment variables
-- **Validation**: `ValidateProductBody` for POST/PUT JSON bodies
-- **Errors**: typed `HttpException`s mapped by `ExceptionHandler` → `{ error, code, details? }`
+- **Errors**: typed `HttpException` by `ExceptionHandler`
 
 ## 🗄️ Database
 
@@ -65,11 +64,10 @@ Error responses format:
 
 ## 🧪 Tests
 
-HTTP API tests use **Pest** against the running Apache `api` (`tests/ProductsTestCase.php` + `tests/Products/`).
+HTTP API tests use **Pest**.
 
-Running them will create/update/delete rows in `productos`.
-<br>Tests that need an existing row create it first with `POST`.
-<br>Each endpoint covers the happy path plus error cases (`404`, `422`, `405` where relevant).
+Running them will create/update/delete rows in `productos` table.
+<br>Tests that need an existing row, will create it first with `POST`.
 
 | File | Endpoint |
 |------|----------|
