@@ -1,0 +1,175 @@
+openapi: 3.0.3
+info:
+  title: Products API
+  description: |
+    PHP REST API for product management.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8081
+    description: Local API
+
+tags:
+  - name: Productos
+
+paths:
+  /productos:
+    get:
+      tags: [Productos]
+      summary: List products (paginated)
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: per_page
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
+      responses:
+        '200':
+          description: Paginated list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductoList'
+
+    post:
+      tags: [Productos]
+      summary: Create a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductoInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producto'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /productos/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ProductoId'
+
+    get:
+      tags: [Productos]
+      summary: Get a product by ID
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producto'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags: [Productos]
+      summary: Update a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductoInput'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producto'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags: [Productos]
+      summary: Delete a product
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  parameters:
+    ProductoId:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
+
+  schemas:
+    Producto:
+      type: object
+      required: [id, nombre, descripcion, precio, precio_usd]
+      properties:
+        id: { type: integer }
+        nombre: { type: string }
+        descripcion: { type: string }
+        precio: { type: number, description: ARS }
+        precio_usd: { type: number, description: USD via PRECIO_USD }
+        created_at: { type: string }
+        updated_at: { type: string }
+
+    ProductoInput:
+      type: object
+      required: [nombre, descripcion, precio]
+      properties:
+        nombre: { type: string }
+        descripcion: { type: string }
+        precio: { type: number, minimum: 0 }
+
+    ProductoList:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Producto'
+        meta:
+          type: object
+          required: [page, per_page, total, total_pages]
+          properties:
+            page: { type: integer }
+            per_page: { type: integer }
+            total: { type: integer }
+            total_pages: { type: integer }
+
+    Error:
+      type: object
+      required: [error, code]
+      properties:
+        error: { type: string }
+        code: { type: string }
+        details:
+          type: object
+          additionalProperties: { type: string }

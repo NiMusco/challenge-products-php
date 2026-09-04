@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Exceptions\ValidationException;
 use App\Http\JsonResponse;
 use App\Repositories\ProductRepository;
 use App\Services\PriceConverter;
-use InvalidArgumentException;
 use Throwable;
 
 final class ProductController
 {
+    private const DEFAULT_PAGE = 1;
+    private const DEFAULT_PER_PAGE = 10;
+
     public function __construct(
         private readonly ProductRepository $products,
         private readonly PriceConverter $priceConverter,
@@ -20,12 +23,28 @@ final class ProductController
 
     public function index(): void
     {
+        $page = max(1, $this->queryInt('page', self::DEFAULT_PAGE));
+        $perPage = max(1, min(100, $this->queryInt('per_page', self::DEFAULT_PER_PAGE)));
+
+        $result = $this->products->findPaginated($page, $perPage);
+        $totalPages = $result['total'] > 0
+            ? (int) ceil($result['total'] / $perPage)
+            : 0;
+
         $items = array_map(
             fn (array $product): array => $this->present($product),
-            $this->products->findAll()
+            $result['items']
         );
 
-        JsonResponse::send($items);
+        JsonResponse::send([
+            'data' => $items,
+            'meta' => [
+                'page' => $page,
+                'per_page' => $perPage,
+                'total' => $result['total'],
+                'total_pages' => $totalPages,
+            ],
+        ]);
     }
 
     public function show(int $id): void
@@ -33,7 +52,7 @@ final class ProductController
         $product = $this->products->findById($id);
 
         if ($product === null) {
-            JsonResponse::error('Product not found.', 404);
+            JsonResponse::error('Product not found.', 404, 'NOT_FOUND');
             return;
         }
 
@@ -48,41 +67,54 @@ final class ProductController
             $product = $this->products->findById($id);
 
             JsonResponse::send($this->present($product ?? []), 201);
-        } catch (InvalidArgumentException $exception) {
-            JsonResponse::error($exception->getMessage(), 422);
-        } catch (Throwable $exception) {
-            JsonResponse::error('Unable to create product.', 500);
+        } catch (ValidationException $exception) {
+            JsonResponse::error(
+                $exception->getMessage(),
+                422,
+                'VALIDATION_ERROR',
+                $exception->details()
+            );
+        } catch (Throwable) {
+            JsonResponse::error('Unable to create product.', 500, 'SERVER_ERROR');
         }
     }
 
     public function update(int $id): void
     {
-        if ($this->products->findById($id) === null) {
-            JsonResponse::error('Product not found.', 404);
-            return;
-        }
-
         try {
             $payload = $this->validatedPayload($this->readJsonBody());
+
+            // Single write, then one read — avoid a pre-update existence SELECT.
+            // Unchanged values still return the product via findById.
             $this->products->update($id, $payload);
             $product = $this->products->findById($id);
 
-            JsonResponse::send($this->present($product ?? []));
-        } catch (InvalidArgumentException $exception) {
-            JsonResponse::error($exception->getMessage(), 422);
-        } catch (Throwable $exception) {
-            JsonResponse::error('Unable to update product.', 500);
+            if ($product === null) {
+                JsonResponse::error('Product not found.', 404, 'NOT_FOUND');
+                return;
+            }
+
+            JsonResponse::send($this->present($product));
+        } catch (ValidationException $exception) {
+            JsonResponse::error(
+                $exception->getMessage(),
+                422,
+                'VALIDATION_ERROR',
+                $exception->details()
+            );
+        } catch (Throwable) {
+            JsonResponse::error('Unable to update product.', 500, 'SERVER_ERROR');
         }
     }
 
     public function destroy(int $id): void
     {
         if (!$this->products->delete($id)) {
-            JsonResponse::error('Product not found.', 404);
+            JsonResponse::error('Product not found.', 404, 'NOT_FOUND');
             return;
         }
 
-        JsonResponse::send(['message' => 'Product deleted successfully.']);
+        JsonResponse::noContent();
     }
 
     /** @param array<string, mixed> $product */
@@ -108,7 +140,9 @@ final class ProductController
         $decoded = json_decode($raw === false ? '' : $raw, true);
 
         if (!is_array($decoded)) {
-            throw new InvalidArgumentException('Invalid JSON body.');
+            throw new ValidationException('Invalid JSON body.', [
+                'body' => 'Request body must be a valid JSON object.',
+            ]);
         }
 
         return $decoded;
@@ -120,20 +154,26 @@ final class ProductController
      */
     private function validatedPayload(array $payload): array
     {
+        $details = [];
+
         $nombre = trim((string) ($payload['nombre'] ?? ''));
         $descripcion = trim((string) ($payload['descripcion'] ?? ''));
         $precio = $payload['precio'] ?? null;
 
         if ($nombre === '') {
-            throw new InvalidArgumentException('Field "nombre" is required.');
+            $details['nombre'] = 'Field "nombre" is required.';
         }
 
         if ($descripcion === '') {
-            throw new InvalidArgumentException('Field "descripcion" is required.');
+            $details['descripcion'] = 'Field "descripcion" is required.';
         }
 
         if (!is_numeric($precio) || (float) $precio < 0) {
-            throw new InvalidArgumentException('Field "precio" must be a non-negative number.');
+            $details['precio'] = 'Field "precio" must be a non-negative number.';
+        }
+
+        if ($details !== []) {
+            throw new ValidationException('Validation failed.', $details);
         }
 
         return [
@@ -141,5 +181,16 @@ final class ProductController
             'descripcion' => $descripcion,
             'precio' => (float) $precio,
         ];
+    }
+
+    private function queryInt(string $key, int $default): int
+    {
+        $value = $_GET[$key] ?? null;
+
+        if ($value === null || $value === '' || !is_numeric($value)) {
+            return $default;
+        }
+
+        return (int) $value;
     }
 }

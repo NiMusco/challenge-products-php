@@ -7,7 +7,7 @@ services:
       # Host 8081 avoids clashes with other local services often bound to 8080
       - "8081:80"
     environment:
-      PRECIO_USD: ${PRECIO_USD:-1000}
+      PRECIO_USD: ${PRECIO_USD:-1500}
       DB_HOST: db
       DB_PORT: 3306
       DB_DATABASE: productos
@@ -37,6 +37,26 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  swagger:
+    build:
+      context: ./swagger
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    volumes:
+      # Keep built Tailwind CSS from the image; hot-reload only HTML/JS
+      - ./frontend/index.html:/usr/share/nginx/html/index.html:ro
+      - ./frontend/js:/usr/share/nginx/html/js:ro
+    depends_on:
+      - api
 
 volumes:
   mysql_data:

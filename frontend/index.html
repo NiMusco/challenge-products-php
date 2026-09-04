@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Productos</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gray-100 p-4 font-sans text-sm text-gray-900">
+  <div class="mx-auto max-w-4xl">
+    <h1 class="mb-4 text-2xl font-bold">Productos</h1>
+
+    <div id="flash" class="mb-3 hidden border p-2" role="status"></div>
+
+    <h2 id="form-title" class="mb-2 text-lg font-semibold">Agregar producto</h2>
+
+    <form id="product-form" class="mb-6 space-y-2 border border-gray-400 bg-white p-3" novalidate>
+      <input type="hidden" id="product-id" value="">
+
+      <div>
+        <label for="nombre">Nombre</label><br>
+        <input id="nombre" name="nombre" type="text" required class="w-full border border-gray-400 p-1">
+      </div>
+
+      <div>
+        <label for="descripcion">Descripción</label><br>
+        <textarea id="descripcion" name="descripcion" required rows="2" class="w-full border border-gray-400 p-1"></textarea>
+      </div>
+
+      <div>
+        <label for="precio">Precio (ARS)</label><br>
+        <input id="precio" name="precio" type="number" required min="0" step="0.01" class="w-full border border-gray-400 p-1">
+      </div>
+
+      <div class="pt-1">
+        <button type="submit" id="submit-btn" class="border border-gray-500 bg-blue-600 px-3 py-1 text-white">
+          Guardar
+        </button>
+        <button type="button" id="cancel-edit" class="ml-2 hidden border border-gray-500 bg-gray-200 px-3 py-1">
+          Cancelar
+        </button>
+      </div>
+    </form>
+
+    <div class="mb-2 flex items-center justify-between">
+      <h2 class="text-lg font-semibold">Listado</h2>
+      <button type="button" id="refresh-btn" class="border border-gray-500 bg-gray-200 px-3 py-1">
+        Actualizar
+      </button>
+    </div>
+
+    <table class="w-full border-collapse border border-gray-400 bg-white">
+      <thead>
+        <tr class="bg-gray-200 text-left">
+          <th class="border border-gray-400 p-2">ID</th>
+          <th class="border border-gray-400 p-2">Nombre</th>
+          <th class="border border-gray-400 p-2">Descripción</th>
+          <th class="border border-gray-400 p-2">Precio ARS</th>
+          <th class="border border-gray-400 p-2">Precio USD</th>
+          <th class="border border-gray-400 p-2">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="products-body">
+        <tr>
+          <td colspan="6" class="border border-gray-400 p-2 text-center">Cargando...</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="mt-2 flex items-center gap-2">
+      <button type="button" id="prev-page" class="border border-gray-500 bg-gray-200 px-3 py-1">Anterior</button>
+      <span id="page-info">Página 1</span>
+      <button type="button" id="next-page" class="border border-gray-500 bg-gray-200 px-3 py-1">Siguiente</button>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
