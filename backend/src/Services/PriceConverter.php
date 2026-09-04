@@ -8,14 +8,16 @@ use RuntimeException;
 
 final class PriceConverter
 {
-    public function toUsd(float|string $precioArs): float
-    {
-        $precioUsdRate = (float) ($_ENV['PRECIO_USD'] ?? 0);
-
-        if ($precioUsdRate <= 0) {
+    public function __construct(
+        private readonly float $precioUsd,
+    ) {
+        if ($this->precioUsd <= 0) {
             throw new RuntimeException('PRECIO_USD must be a positive number.');
         }
+    }
 
-        return round(((float) $precioArs) / $precioUsdRate, 2);
+    public function toUsd(float|string $precioArs): float
+    {
+        return round(((float) $precioArs) / $this->precioUsd, 2);
     }
 }
