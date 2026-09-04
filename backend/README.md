@@ -29,6 +29,7 @@ docker compose up -d
 
 - **Routing**: `nikic/fast-route` for routing
 - **Config**: `vlucas/phpdotenv` for environment variables
+- **Validation**: `ValidateProductBody` for POST/PUT JSON bodies
 
 ## 🗄️ Database
 

@@ -6,7 +6,7 @@ namespace App\Controllers;
 
 use App\Exceptions\ValidationException;
 use App\Http\JsonResponse;
-use App\Http\ProductRequest;
+use App\Validators\ValidateProductBody;
 use App\Presenters\ProductPresenter;
 use App\Repositories\ProductRepository;
 use Throwable;
@@ -19,6 +19,7 @@ final class ProductController
     public function __construct(
         private readonly ProductRepository $products,
         private readonly ProductPresenter $presenter,
+        private readonly ValidateProductBody $validateProductBody = new ValidateProductBody(),
     ) {
     }
 
@@ -58,7 +59,7 @@ final class ProductController
     public function store(): void
     {
         try {
-            $request = ProductRequest::fromJsonBody();
+            $request = $this->validateProductBody->validate();
             $id = $this->products->create($request->toArray());
             $product = $this->products->findById($id);
 
@@ -78,7 +79,7 @@ final class ProductController
     public function update(int $id): void
     {
         try {
-            $request = ProductRequest::fromJsonBody();
+            $request = $this->validateProductBody->validate();
 
             // Single write, then one read — avoid a pre-update existence SELECT.
             $this->products->update($id, $request->toArray());
