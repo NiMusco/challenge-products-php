@@ -58,11 +58,11 @@ $routeInfo = $dispatcher->dispatch($httpMethod, $uri);
 
 switch ($routeInfo[0]) {
     case Dispatcher::NOT_FOUND:
-        JsonResponse::error('Route not found.', 404);
+        JsonResponse::error('Route not found.', 404, 'NOT_FOUND');
         break;
 
     case Dispatcher::METHOD_NOT_ALLOWED:
-        JsonResponse::error('Method not allowed.', 405);
+        JsonResponse::error('Method not allowed.', 405, 'METHOD_NOT_ALLOWED');
         break;
 
     case Dispatcher::FOUND:
@@ -75,7 +75,7 @@ switch ($routeInfo[0]) {
             'store' => $controller->store(),
             'update' => $controller->update((int) $vars['id']),
             'destroy' => $controller->destroy((int) $vars['id']),
-            default => JsonResponse::error('Unhandled route.', 500),
+            default => JsonResponse::error('Unhandled route.', 500, 'SERVER_ERROR'),
         };
         break;
 }

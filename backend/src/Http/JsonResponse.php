@@ -13,8 +13,29 @@ final class JsonResponse
         echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
-    public static function error(string $message, int $status = 400): void
+    public static function noContent(): void
     {
-        self::send(['error' => $message], $status);
+        http_response_code(204);
+    }
+
+    /**
+     * @param array<string, mixed>|list<mixed>|null $details
+     */
+    public static function error(
+        string $message,
+        int $status = 400,
+        string $code = 'ERROR',
+        array|null $details = null,
+    ): void {
+        $payload = [
+            'error' => $message,
+            'code' => $code,
+        ];
+
+        if ($details !== null) {
+            $payload['details'] = $details;
+        }
+
+        self::send($payload, $status);
     }
 }
