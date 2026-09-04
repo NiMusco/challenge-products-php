@@ -27,17 +27,41 @@ This project runs with Docker Compose from the repository root.
 - **Config**: `vlucas/phpdotenv` for environment variables
 - **USD Conversion**: Responses include `precio` (ARS) and `precio_usd` from `PRECIO_USD`
 - **Swagger Docs**: Separate Docker service (`swagger/openapi.yaml`)
+- **Tests**: Pest feature tests for each API endpoint
 
 ## 🗄️ Database Management
 
-Database schema and seed at `backend/database/init.sql`
-<br>Runs automatically on MySQL entrypoint `/docker-entrypoint-initdb.d/`.
+App schema + seed: `backend/database/init.sql` (MySQL service `db`)
+<br>Test schema only: `backend/database/schema.sql` (MySQL service `db_test`)
 
-Default credentials:
+Both run automatically on each MySQL entrypoint `/docker-entrypoint-initdb.d/`.
+
+Default credentials (same on both containers):
 
 - Database: `productos`
 - User / password: `productos` / `secret`
 - Root password: `root`
+- App MySQL: Docker service `db` (host port `3306`)
+- Test MySQL: Docker service `db_test` (no host port; Docker network only)
+
+## 🧪 Tests
+
+Pest feature tests cover each API endpoint (`GET` list/show, `POST`, `PUT`, `DELETE`).
+
+### Database isolation (Docker)
+
+Feature tests call the API over HTTP, so Pest cannot wrap writes in a DB transaction and roll them back (another PHP process owns the connection). A second table—or even a second schema—on the **same** MySQL container still shares the app’s server.
+
+Isolation here is a **dedicated MySQL container** (`db_test`) with its own Docker volume (`mysql_test_data`):
+
+1. `bin/ensure-testing-database.php` waits until `db_test` is reachable
+2. `composer test` boots a temporary PHP built-in server with `DB_HOST=db_test` (Apache keeps using `db`)
+3. Each test truncates `productos` on `db_test` only
+
+```bash
+docker compose up -d
+docker compose exec api composer test
+```
 
 ## 📚 API Documentation
 

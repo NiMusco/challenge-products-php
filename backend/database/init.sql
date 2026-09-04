@@ -1,6 +1,3 @@
-CREATE DATABASE IF NOT EXISTS productos;
-USE productos;
-
 CREATE TABLE IF NOT EXISTS productos (
     id INT NOT NULL AUTO_INCREMENT,
     nombre VARCHAR(255) NOT NULL,

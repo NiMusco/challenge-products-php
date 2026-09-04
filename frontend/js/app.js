@@ -56,7 +56,7 @@
       .replaceAll('"', '&quot;');
   }
 
-  function icon(name, className = 'h-4 w-4') {
+  function icon(name, className = 'pointer-events-none h-4 w-4') {
     return `<img src="icons/${name}.svg" alt="" class="${className}">`;
   }
 
@@ -134,37 +134,40 @@
       return;
     }
 
-    tbody.innerHTML = products.map((p) => `
-      <tr data-id="${p.id}">
+    tbody.innerHTML = products.map((p, index) => `
+      <tr data-id="${p.id}" class="${index % 2 === 0 ? 'bg-white' : 'bg-gray-100'}">
         <td class="border border-gray-400 p-2">${p.id}</td>
         <td class="border border-gray-400 p-2">${escapeHtml(p.nombre)}</td>
-        <td class="border border-gray-400 p-2">${escapeHtml(p.descripcion)}</td>
+        <td class="hidden border border-gray-400 p-2 md:table-cell">${escapeHtml(p.descripcion)}</td>
         <td class="border border-gray-400 p-2">${formatMoney(p.precio, 'ARS')}</td>
         <td class="border border-gray-400 p-2">${formatMoney(p.precio_usd, 'USD')}</td>
-        <td class="relative border border-gray-400 p-2">
-          <button
-            type="button"
-            data-action="menu"
-            class="inline-flex items-center border border-gray-500 bg-gray-200 p-1"
-            aria-label="Acciones"
-          >
-            ${icon('ellipsis-vertical')}
-          </button>
-          <div class="menu absolute right-2 z-10 mt-1 hidden w-36 border border-gray-400 bg-white shadow">
+        <td class="relative w-16 min-w-16 border border-gray-400 p-2 text-center">
+          <div class="inline-block text-left">
             <button
               type="button"
-              data-action="edit"
-              class="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-gray-100"
+              data-action="menu"
+              class="inline-flex items-center justify-center border border-gray-500 bg-gray-200 p-1.5"
+              aria-label="Acciones"
+              aria-haspopup="true"
             >
-              ${icon('pencil')} Editar
+              ${icon('settings')}
             </button>
-            <button
-              type="button"
-              data-action="delete"
-              class="flex w-full items-center gap-2 px-3 py-2 text-left text-red-700 hover:bg-gray-100"
-            >
-              ${icon('trash-2')} Eliminar
-            </button>
+            <div class="menu absolute right-0 z-20 mt-1 hidden w-36 border border-gray-400 bg-white text-left shadow">
+              <button
+                type="button"
+                data-action="edit"
+                class="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-gray-100"
+              >
+                ${icon('pencil')} Editar
+              </button>
+              <button
+                type="button"
+                data-action="delete"
+                class="flex w-full items-center gap-2 px-3 py-2 text-left text-red-700 hover:bg-gray-100"
+              >
+                ${icon('trash-2')} Eliminar
+              </button>
+            </div>
           </div>
         </td>
       </tr>
@@ -249,9 +252,10 @@
   });
 
   document.addEventListener('click', (event) => {
-    if (!event.target.closest('[data-action="menu"]') && !event.target.closest('.menu')) {
-      closeOpenMenu();
+    if (event.target.closest('[data-action="menu"]') || event.target.closest('.menu')) {
+      return;
     }
+    closeOpenMenu();
   });
 
   tbody.addEventListener('click', async (event) => {
@@ -265,6 +269,7 @@
     const action = button.dataset.action;
 
     if (action === 'menu') {
+      event.preventDefault();
       event.stopPropagation();
       const menu = row.querySelector('.menu');
       if (!menu) return;
@@ -281,6 +286,7 @@
     closeOpenMenu();
 
     if (action === 'edit') {
+      event.stopPropagation();
       clearFlash();
       try {
         openEditDialog(await apiRequest(`/productos/${id}`));
@@ -291,6 +297,7 @@
     }
 
     if (action === 'delete') {
+      event.stopPropagation();
       if (!window.confirm(`¿Eliminar producto #${id}?`)) return;
       clearFlash();
       try {

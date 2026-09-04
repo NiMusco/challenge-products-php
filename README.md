@@ -32,7 +32,7 @@ Monorepo for a products management challenge.
 
 ## 📚 Documentation
 
-- **[Backend / API](backend/README.md)** — PHP REST API, MySQL, Swagger, `PRECIO_USD`
+- **[Backend / API](backend/README.md)** — PHP REST API, MySQL, Swagger, `PRECIO_USD`, Pest + Docker `db_test`
 - **[Frontend](frontend/README.md)** — Vanilla HTML/JS UI with Tailwind
 
 ---
