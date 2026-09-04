@@ -26,7 +26,6 @@ This project runs with Docker Compose from the repository root.
 - **Routing**: `nikic/fast-route` for routing
 - **Config**: `vlucas/phpdotenv` for environment variables
 - **USD Conversion**: Responses include `precio` (ARS) and `precio_usd` from `PRECIO_USD`
-- **Pagination**: `GET /productos?page=1&per_page=10`
 - **Swagger Docs**: Separate Docker service (`swagger/openapi.yaml`)
 
 ## 🗄️ Database Management

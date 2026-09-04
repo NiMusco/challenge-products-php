@@ -2,7 +2,7 @@
   'use strict';
 
   const API_BASE = (window.APP_CONFIG && window.APP_CONFIG.apiBaseUrl) || 'http://localhost:8081';
-  const PER_PAGE = 10;
+  const PER_PAGE = 5;
 
   let currentPage = 1;
   let totalPages = 1;
