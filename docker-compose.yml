@@ -52,9 +52,10 @@ services:
     ports:
       - "3000:80"
     volumes:
-      # Keep built Tailwind CSS from the image; hot-reload only HTML/JS
+      # Keep built Tailwind CSS from the image; hot-reload HTML/JS/icons
       - ./frontend/index.html:/usr/share/nginx/html/index.html:ro
       - ./frontend/js:/usr/share/nginx/html/js:ro
+      - ./frontend/icons:/usr/share/nginx/html/icons:ro
     depends_on:
       - api
 

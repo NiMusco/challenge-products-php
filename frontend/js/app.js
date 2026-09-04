@@ -6,12 +6,15 @@
 
   let currentPage = 1;
   let totalPages = 1;
+  let openMenu = null;
 
   const flash = document.getElementById('flash');
+  const dialog = document.getElementById('product-dialog');
   const form = document.getElementById('product-form');
   const formTitle = document.getElementById('form-title');
   const submitBtn = document.getElementById('submit-btn');
-  const cancelEdit = document.getElementById('cancel-edit');
+  const cancelBtn = document.getElementById('cancel-btn');
+  const newProductBtn = document.getElementById('new-product-btn');
   const refreshBtn = document.getElementById('refresh-btn');
   const prevPage = document.getElementById('prev-page');
   const nextPage = document.getElementById('next-page');
@@ -53,6 +56,17 @@
       .replaceAll('"', '&quot;');
   }
 
+  function icon(name, className = 'h-4 w-4') {
+    return `<img src="icons/${name}.svg" alt="" class="${className}">`;
+  }
+
+  function closeOpenMenu() {
+    if (openMenu) {
+      openMenu.classList.add('hidden');
+      openMenu = null;
+    }
+  }
+
   async function apiRequest(path, options = {}) {
     const response = await fetch(`${API_BASE}${path}`, {
       headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
@@ -80,22 +94,30 @@
     return data;
   }
 
-  function resetForm() {
+  function openCreateDialog() {
     form.reset();
     productId.value = '';
-    formTitle.textContent = 'Agregar producto';
+    formTitle.textContent = 'Nuevo producto';
     submitBtn.textContent = 'Guardar';
-    cancelEdit.classList.add('hidden');
+    dialog.showModal();
+    nombre.focus();
   }
 
-  function enterEditMode(product) {
+  function openEditDialog(product) {
     productId.value = String(product.id);
     nombre.value = product.nombre;
     descripcion.value = product.descripcion;
     precio.value = String(product.precio);
     formTitle.textContent = `Editar producto #${product.id}`;
     submitBtn.textContent = 'Actualizar';
-    cancelEdit.classList.remove('hidden');
+    dialog.showModal();
+    nombre.focus();
+  }
+
+  function closeDialog() {
+    dialog.close();
+    form.reset();
+    productId.value = '';
   }
 
   function updatePager() {
@@ -105,6 +127,8 @@
   }
 
   function renderProducts(products) {
+    closeOpenMenu();
+
     if (!products.length) {
       tbody.innerHTML = '<tr><td colspan="6" class="border border-gray-400 p-2 text-center">Sin productos</td></tr>';
       return;
@@ -117,9 +141,31 @@
         <td class="border border-gray-400 p-2">${escapeHtml(p.descripcion)}</td>
         <td class="border border-gray-400 p-2">${formatMoney(p.precio, 'ARS')}</td>
         <td class="border border-gray-400 p-2">${formatMoney(p.precio_usd, 'USD')}</td>
-        <td class="border border-gray-400 p-2">
-          <button type="button" data-action="edit" class="border border-gray-500 bg-gray-200 px-2 py-0.5">Editar</button>
-          <button type="button" data-action="delete" class="border border-red-700 bg-red-600 px-2 py-0.5 text-white">Eliminar</button>
+        <td class="relative border border-gray-400 p-2">
+          <button
+            type="button"
+            data-action="menu"
+            class="inline-flex items-center border border-gray-500 bg-gray-200 p-1"
+            aria-label="Acciones"
+          >
+            ${icon('ellipsis-vertical')}
+          </button>
+          <div class="menu absolute right-2 z-10 mt-1 hidden w-36 border border-gray-400 bg-white shadow">
+            <button
+              type="button"
+              data-action="edit"
+              class="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-gray-100"
+            >
+              ${icon('pencil')} Editar
+            </button>
+            <button
+              type="button"
+              data-action="delete"
+              class="flex w-full items-center gap-2 px-3 py-2 text-left text-red-700 hover:bg-gray-100"
+            >
+              ${icon('trash-2')} Eliminar
+            </button>
+          </div>
         </td>
       </tr>
     `).join('');
@@ -166,7 +212,7 @@
         showFlash(`Producto #${created.id} creado`);
         currentPage = 1;
       }
-      resetForm();
+      closeDialog();
       await loadProducts(currentPage);
     } catch (error) {
       showFlash(error.message, true);
@@ -175,9 +221,18 @@
     }
   });
 
-  cancelEdit.addEventListener('click', () => {
+  newProductBtn.addEventListener('click', () => {
     clearFlash();
-    resetForm();
+    openCreateDialog();
+  });
+
+  cancelBtn.addEventListener('click', () => {
+    closeDialog();
+  });
+
+  dialog.addEventListener('cancel', (event) => {
+    event.preventDefault();
+    closeDialog();
   });
 
   refreshBtn.addEventListener('click', () => {
@@ -193,6 +248,12 @@
     if (currentPage < totalPages) loadProducts(currentPage + 1);
   });
 
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest('[data-action="menu"]') && !event.target.closest('.menu')) {
+      closeOpenMenu();
+    }
+  });
+
   tbody.addEventListener('click', async (event) => {
     const button = event.target.closest('button[data-action]');
     if (!button) return;
@@ -201,24 +262,41 @@
     if (!row) return;
 
     const id = Number(row.dataset.id);
+    const action = button.dataset.action;
 
-    if (button.dataset.action === 'edit') {
+    if (action === 'menu') {
+      event.stopPropagation();
+      const menu = row.querySelector('.menu');
+      if (!menu) return;
+
+      const isOpen = openMenu === menu;
+      closeOpenMenu();
+      if (!isOpen) {
+        menu.classList.remove('hidden');
+        openMenu = menu;
+      }
+      return;
+    }
+
+    closeOpenMenu();
+
+    if (action === 'edit') {
       clearFlash();
       try {
-        enterEditMode(await apiRequest(`/productos/${id}`));
+        openEditDialog(await apiRequest(`/productos/${id}`));
       } catch (error) {
         showFlash(error.message, true);
       }
       return;
     }
 
-    if (button.dataset.action === 'delete') {
+    if (action === 'delete') {
       if (!window.confirm(`¿Eliminar producto #${id}?`)) return;
       clearFlash();
       try {
         await apiRequest(`/productos/${id}`, { method: 'DELETE' });
         showFlash(`Producto #${id} eliminado`);
-        if (productId.value === String(id)) resetForm();
+        if (productId.value === String(id)) closeDialog();
         await loadProducts(currentPage);
       } catch (error) {
         showFlash(error.message, true);
