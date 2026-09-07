@@ -23,7 +23,7 @@ final class ProductController
     public function list(): void
     {
         $pagination = Pagination::buildFromQueryParams();
-        $result = $this->products->findPaginated($pagination->page, $pagination->perPage);
+        $result = $this->products->find($pagination->page, $pagination->perPage);
 
         $items = [];
         foreach ($result['items'] as $product) {

@@ -16,23 +16,7 @@ final class ProductRepository
         $this->db = $db ?? Database::connection();
     }
 
-    public function findAll(): array
-    {
-        $statement = $this->db->query(
-            'SELECT id, nombre, descripcion, precio, created_at, updated_at
-             FROM productos
-             ORDER BY id ASC'
-        );
-
-        $items = [];
-        foreach ($statement->fetchAll() as $row) {
-            $items[] = $this->normalize($row);
-        }
-
-        return $items;
-    }
-
-    public function findPaginated(int $page, int $perPage): array
+    public function find(int $page, int $perPage): array
     {
         $page = max(1, $page);
         $perPage = max(1, min(100, $perPage));
