@@ -16,7 +16,6 @@ final class ProductRepository
         $this->db = $db ?? Database::connection();
     }
 
-    /** @return list<array<string, mixed>> */
     public function findAll(): array
     {
         $statement = $this->db->query(
@@ -25,15 +24,14 @@ final class ProductRepository
              ORDER BY id ASC'
         );
 
-        return $statement->fetchAll();
+        $items = [];
+        foreach ($statement->fetchAll() as $row) {
+            $items[] = $this->normalize($row);
+        }
+
+        return $items;
     }
 
-    /**
-     * @return array{
-     *   items: list<array<string, mixed>>,
-     *   total: int
-     * }
-     */
     public function findPaginated(int $page, int $perPage): array
     {
         $page = max(1, $page);
@@ -53,13 +51,17 @@ final class ProductRepository
         $statement->bindValue('offset', $offset, PDO::PARAM_INT);
         $statement->execute();
 
+        $items = [];
+        foreach ($statement->fetchAll() as $row) {
+            $items[] = $this->normalize($row);
+        }
+
         return [
-            'items' => $statement->fetchAll(),
+            'items' => $items,
             'total' => $total,
         ];
     }
 
-    /** @return array<string, mixed>|null */
     public function findById(int $id): ?array
     {
         $statement = $this->db->prepare(
@@ -70,10 +72,9 @@ final class ProductRepository
         $statement->execute(['id' => $id]);
         $product = $statement->fetch();
 
-        return $product === false ? null : $product;
+        return $product === false ? null : $this->normalize($product);
     }
 
-    /** @param array{nombre: string, descripcion: string, precio: float|int|string} $data */
     public function create(array $data): int
     {
         $statement = $this->db->prepare(
@@ -89,7 +90,6 @@ final class ProductRepository
         return (int) $this->db->lastInsertId();
     }
 
-    /** @param array{nombre: string, descripcion: string, precio: float|int|string} $data */
     public function update(int $id, array $data): void
     {
         $statement = $this->db->prepare(
@@ -111,5 +111,17 @@ final class ProductRepository
         $statement->execute(['id' => $id]);
 
         return $statement->rowCount() > 0;
+    }
+
+    private function normalize(array $row): array
+    {
+        return [
+            'id' => (int) $row['id'],
+            'nombre' => (string) $row['nombre'],
+            'descripcion' => (string) $row['descripcion'],
+            'precio' => (float) $row['precio'],
+            'created_at' => $row['created_at'],
+            'updated_at' => $row['updated_at'],
+        ];
     }
 }
