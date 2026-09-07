@@ -8,6 +8,8 @@ use PDO;
 use PDOException;
 use RuntimeException;
 
+use function App\Utils\env;
+
 final class Database
 {
     private static ?PDO $connection = null;
@@ -18,11 +20,11 @@ final class Database
             return self::$connection;
         }
 
-        $host = $_ENV['DB_HOST'] ?? 'db';
-        $port = $_ENV['DB_PORT'] ?? '3306';
-        $database = $_ENV['DB_DATABASE'] ?? 'productos';
-        $username = $_ENV['DB_USERNAME'] ?? 'productos';
-        $password = $_ENV['DB_PASSWORD'] ?? 'secret';
+        $host = (string) env('DB_HOST', 'db');
+        $port = (string) env('DB_PORT', '3306');
+        $database = (string) env('MYSQL_DATABASE', 'productos');
+        $username = (string) env('MYSQL_USER', 'productos');
+        $password = (string) env('MYSQL_PASSWORD', 'secret');
 
         $dsn = sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4', $host, $port, $database);
 

@@ -1,43 +1,53 @@
+# Credentials and shared settings are defined ONCE below (YAML anchors),
+# then reused by `db` (MySQL image) and `api` (same MYSQL_* names).
+
+x-db-credentials: &db-credentials
+  MYSQL_DATABASE: productos
+  MYSQL_USER: productos
+  MYSQL_PASSWORD: secret
+
 services:
+
+  # PHP API
   api:
     build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      # Host 8081 avoids clashes with other local services often bound to 8080
       - "8081:80"
     environment:
-      PRECIO_USD: ${PRECIO_USD:-1500}
+      <<: *db-credentials
+      PRECIO_USD: "1500"
       DB_HOST: db
-      DB_PORT: 3306
-      DB_DATABASE: productos
-      DB_USERNAME: productos
-      DB_PASSWORD: secret
+      DB_PORT: "3306"
     volumes:
-      # Bind mount for live code reload in development
       - ./backend:/var/www/html
     depends_on:
       db:
         condition: service_healthy
 
+  # MySQL database
   db:
     image: mysql:8.0
     environment:
+      <<: *db-credentials
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: productos
-      MYSQL_USER: productos
-      MYSQL_PASSWORD: secret
     ports:
       - "3306:3306"
     volumes:
       - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD || exit 1",
+        ]
       interval: 5s
       timeout: 5s
       retries: 10
 
+  # Swagger UI
   swagger:
     build:
       context: ./swagger
@@ -45,16 +55,20 @@ services:
     ports:
       - "8082:8080"
 
+  # Frontend
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "3000:80"
+    environment:
+      # Browser-reachable API URL (host machine), not the Docker service name
+      API_BASE_URL: http://localhost:8081
     volumes:
-      # Keep built Tailwind CSS from the image; hot-reload only HTML/JS
       - ./frontend/index.html:/usr/share/nginx/html/index.html:ro
       - ./frontend/js:/usr/share/nginx/html/js:ro
+      - ./frontend/icons:/usr/share/nginx/html/icons:ro
     depends_on:
       - api
 
