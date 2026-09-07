@@ -8,20 +8,4 @@ export API_BASE_URL
 
 php bin/ensure-testing-database.php
 
-i=0
-while [ "$i" -lt 50 ]; do
-  if php -r "exit(@file_get_contents(getenv('API_BASE_URL') . '/productos') === false ? 1 : 0);"; then
-    break
-  fi
-  i=$((i + 1))
-  sleep 0.1
-done
-
-if [ "$i" -eq 50 ]; then
-  echo "Apache API is not reachable at ${API_BASE_URL}." >&2
-  echo "Start the stack first: docker compose up -d" >&2
-  echo "Then run: docker compose exec api composer test" >&2
-  exit 1
-fi
-
 ./vendor/bin/pest "$@"

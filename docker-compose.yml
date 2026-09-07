@@ -20,11 +20,46 @@ services:
       PRECIO_USD: "1500"
       DB_HOST: db
       DB_PORT: "3306"
+      API_BASE_URL: http://127.0.0.1
     volumes:
       - ./backend:/var/www/html
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "php",
+          "-r",
+          "exit(@file_get_contents('http://127.0.0.1/productos') === false ? 1 : 0);",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # Pest HTTP tests (waits for healthy api + db)
+  tests:
+    profiles: ["test"]
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      <<: *db-credentials
+      PRECIO_USD: "1500"
+      DB_HOST: db
+      DB_PORT: "3306"
+      API_BASE_URL: http://api
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    entrypoint: ["composer"]
+    command: ["test"]
 
   # MySQL database
   db:
@@ -70,7 +105,8 @@ services:
       - ./frontend/js:/usr/share/nginx/html/js:ro
       - ./frontend/icons:/usr/share/nginx/html/icons:ro
     depends_on:
-      - api
+      api:
+        condition: service_healthy
 
 volumes:
   mysql_data:
