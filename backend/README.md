@@ -96,5 +96,5 @@ Running them will create/update/delete rows in `productos` table.
 
 ```bash
 docker compose up -d
-docker compose exec api composer test
+docker compose --profile test run --rm tests
 ```

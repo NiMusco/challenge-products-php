@@ -26,13 +26,14 @@ Monorepo for a products management challenge.
 
 ```bash
 docker compose up -d
-docker compose exec api composer test
 ```
 
 ### Tests
 
+Starts (or waits for) healthy `db` + `api`, then runs Pest:
+
 ```bash
-docker compose exec api composer test
+docker compose --profile test run --rm tests
 ```
 
 ### ⚙️ Environment variables
