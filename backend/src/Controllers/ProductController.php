@@ -16,9 +16,8 @@ final class ProductController
     public function __construct(
         private readonly ProductRepository $products,
         private readonly PriceConverter $priceConverter,
-        private readonly ProductValidator $productValidator = new ProductValidator(),
-    ) {
-    }
+        private readonly ProductValidator $productValidator
+    ) {}
 
     public function list(): void
     {

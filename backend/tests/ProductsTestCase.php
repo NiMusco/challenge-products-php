@@ -40,13 +40,15 @@ abstract class ProductsTestCase extends BaseTestCase
         ];
         $payload = '';
 
-        if (is_array($body)) {
+        if(!empty($body){
             $headers[] = 'Content-Type: application/json';
-            $payload = json_encode($body, JSON_UNESCAPED_UNICODE) ?: '';
-        } elseif (is_string($body)) {
-            $headers[] = 'Content-Type: application/json';
-            $payload = $body;
-        }
+        
+            if (is_array($body)) {
+                $payload = json_encode($body, JSON_UNESCAPED_UNICODE) ?: '';
+            } elseif (is_string($body)) {
+                $payload = $body;
+            }
+        });
 
         $context = stream_context_create([
             'http' => [

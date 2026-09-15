@@ -6,6 +6,7 @@ use App\Controllers\ProductController;
 use App\Repositories\ProductRepository;
 use App\Routing\Router;
 use App\Utils\PriceConverter;
+use App\Validators\ProductValidator; // IMPORTANTE: Se añade el validador
 use Dotenv\Dotenv;
 
 use function App\Utils\env;
@@ -26,10 +27,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
 }
 
 $priceConverter = new PriceConverter((float) env('PRECIO_USD', 0));
+
 $controller = new ProductController(
     new ProductRepository(),
     $priceConverter,
+    new ProductValidator()
 );
+
 $router = new Router($controller);
 
 $router->dispatch(
