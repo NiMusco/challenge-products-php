@@ -40,7 +40,7 @@ abstract class ProductsTestCase extends BaseTestCase
         ];
         $payload = '';
 
-        if(!empty($body){
+        if(!empty($body)){
             $headers[] = 'Content-Type: application/json';
         
             if (is_array($body)) {
@@ -48,7 +48,7 @@ abstract class ProductsTestCase extends BaseTestCase
             } elseif (is_string($body)) {
                 $payload = $body;
             }
-        });
+        };
 
         $context = stream_context_create([
             'http' => [
